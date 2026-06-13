@@ -1,0 +1,530 @@
+{
+  "name": "Agent 3 - Review Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "review-agent",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a8f8578e-237c-44df-8251-db7cb508c92d",
+      "name": "Receive Content for Review",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -112
+      ],
+      "webhookId": "25f77e2d-2a50-4782-a847-b366b4a65ee0"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f1",
+              "name": "product_name",
+              "value": "={{ $json.body?.product_name ?? $json.product_name ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "f2",
+              "name": "product_description",
+              "value": "={{ $json.body?.product_description ?? $json.product_description ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "f3",
+              "name": "target_audience",
+              "value": "={{ $json.body?.target_audience ?? $json.target_audience ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "f4",
+              "name": "chat_id",
+              "value": "={{ $json.body?.chat_id ?? $json.chat_id ?? \"7ef90d05-e5c2-4f15-ac62-8f5335529067\" }}",
+              "type": "string"
+            },
+            {
+              "id": "f5",
+              "name": "research_data",
+              "value": "={{ $json.body?.research_data ?? $json.research_data ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "f6",
+              "name": "content_data",
+              "value": "={{ $json.body?.content_data ?? $json.content_data ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "f7",
+              "name": "attempt",
+              "value": "={{ $json.body?.attempt ?? $json.attempt ?? 1 }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6df9d4d3-8064-45f2-a651-fa4f80ce7609",
+      "name": "Normalize Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.aimlapi.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer e36e9050421292fd40419b35ab606cfb"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"model\": \"google/gemma-3-4b-it\", \"messages\": [ { \"role\": \"user\", \"content\": \"You are an extremely strict Content Review Agent for a premium ecommerce brand. You have very high standards. Score the marketing content below on a scale of 1-10. IMPORTANT SCORING RULES:\\n- If this is attempt 1, be very strict. Only score 7+ if the content is truly exceptional with specific benefits, emotional triggers, and strong CTAs.\\n- If content is generic, vague, or lacks specific product benefits, score it 4-6.\\n- If content mentions specific features, pain points, and has compelling hooks, score 7+.\\n\\nReturn ONLY a valid JSON object with these exact fields: overall_score (number 1-10), approved (boolean true ONLY if score is 7 or above), issues_found (array of specific strings describing problems, empty array if approved), revision_notes (string with exact fixes needed, empty string if approved), approval_summary (string). No markdown, no backticks, ONLY raw JSON.\\n\\nProduct: \" + $json.product_name + \"\\nDescription: \" + $json.product_description + \"\\nAudience: \" + $json.target_audience + \"\\nAttempt number: \" + ($json.attempt || 1) + \"\\n\\nContent to review:\\n\" + $json.content_data } ], \"temperature\": 0.2, \"max_tokens\": 800 } }}",
+        "options": {}
+      },
+      "id": "8bf388f4-ee2f-4790-9f58-e35b1c113cfa",
+      "name": "OpenAI - Review Content",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        448,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "r1",
+              "name": "overall_score",
+              "value": "={{ (() => { const raw = $json.choices[0].message.content.replace(/```json/g, '').replace(/```/g, '').trim(); try { return JSON.parse(raw).overall_score; } catch(e) { return 5; } })() }}",
+              "type": "number"
+            },
+            {
+              "id": "r2",
+              "name": "approved",
+              "value": "={{ (() => { const raw = $json.choices[0].message.content.replace(/```json/g, '').replace(/```/g, '').trim(); try { return JSON.parse(raw).approved; } catch(e) { return false; } })() }}",
+              "type": "boolean"
+            },
+            {
+              "id": "r3",
+              "name": "revision_notes",
+              "value": "={{ (() => { const raw = $json.choices[0].message.content.replace(/```json/g, '').replace(/```/g, '').trim(); try { return JSON.parse(raw).revision_notes; } catch(e) { return 'Unable to parse review'; } })() }}",
+              "type": "string"
+            },
+            {
+              "id": "r4",
+              "name": "approval_summary",
+              "value": "={{ (() => { const raw = $json.choices[0].message.content.replace(/```json/g, '').replace(/```/g, '').trim(); try { return JSON.parse(raw).approval_summary; } catch(e) { return ''; } })() }}",
+              "type": "string"
+            },
+            {
+              "id": "r5",
+              "name": "issues_found",
+              "value": "={{ (() => { const raw = $json.choices[0].message.content.replace(/```json/g, '').replace(/```/g, '').trim(); try { return JSON.parse(raw).issues_found.join(', '); } catch(e) { return ''; } })() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f8ce1a41-e0d9-4e85-a9d7-910fe055fc43",
+      "name": "Parse Review Result",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.approved }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              },
+              "rightValue": true,
+              "id": "a7150b3c-d2d1-4e10-a07d-c079831bfdc9"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "5fbaf71f-2920-4ef8-9171-c6c801680290",
+      "name": "Is Content Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        896,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ \"https://app.band.ai/api/v1/agent/chats/\" + $('Build Approval Message').item.json.chat_id + \"/messages\" }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $('Build Approval Message').item.json.band_api_key }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"message\": { \"content\": $('Build Approval Message').item.json.band_message, \"mentions\": [ { \"id\": \"e827372f-3f1d-411b-b454-2353fb8e1e75\", \"name\": \"Agent4 campaign\", \"handle\": \"aiadpulse12/agent4-campaign\" } ] } } }}",
+        "options": {}
+      },
+      "id": "881c4ab6-249b-47c0-aa10-cbda0f80e36e",
+      "name": "Post Approval to Band",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1344,
+        -208
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kqB6nBjSSN6QcSpT",
+          "name": "Band ReviewAgent Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"success\", \"agent\": \"ReviewAgent\", \"approved\": $(\"Parse Review Result\").item.json.approved, \"score\": $(\"Parse Review Result\").item.json.overall_score } }}",
+        "options": {}
+      },
+      "id": "8cd2d895-48ac-495a-ad99-b790328ac59b",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1792,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ \"https://app.band.ai/api/v1/agent/chats/\" + $('Build Revision Message').item.json.chat_id + \"/messages\" }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $('Build Revision Message').item.json.band_api_key }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"message\": { \"content\": $('Build Revision Message').item.json.band_message, \"mentions\": [ { \"id\": \"f5a81d9f-9608-444d-ba22-c4b9477631c2\", \"name\": \"Agent2 content\", \"handle\": \"aiadpulse12/agent2-content\" } ] } } }}",
+        "options": {}
+      },
+      "id": "15612992-eafb-438e-80eb-22806fc81778",
+      "name": "Post Revision Request to Band",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1344,
+        -16
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kqB6nBjSSN6QcSpT",
+          "name": "Band ReviewAgent Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://aiadpulse12.app.n8n.cloud/webhook/content-agent",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"product_name\": $('Build Revision Message').item.json.product_name, \"product_description\": $('Build Revision Message').item.json.product_description, \"target_audience\": $('Build Revision Message').item.json.target_audience, \"chat_id\": $('Build Revision Message').item.json.chat_id, \"research_data\": $('Build Revision Message').item.json.research_data, \"revision_notes\": $('Build Revision Message').item.json.revision_notes, \"attempt\": $('Build Revision Message').item.json.attempt } }}",
+        "options": {}
+      },
+      "id": "1c9d21cd-2b93-4df8-97e3-e49b15a2c84d",
+      "name": "Send Back to Content Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1568,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const normalizedData = $('Normalize Input').item.json;\nconst reviewResult = $('Parse Review Result').item.json;\n\nconst messageContent = `@aiadpulse12/agent4-campaign ✅ CONTENT APPROVED\\n\\n📦 Product: ${normalizedData.product_name}\\n⭐ Final Score: ${reviewResult.overall_score}/10\\n📝 Summary: ${reviewResult.approval_summary}\\n\\n➡️ ACTION: Build the final campaign brief for this product.`;\n\nreturn [{\n  json: {\n    product_name: normalizedData.product_name,\n    product_description: normalizedData.product_description,\n    target_audience: normalizedData.target_audience,\n    chat_id: normalizedData.chat_id,\n    research_data: normalizedData.research_data,\n    content_data: normalizedData.content_data,\n    overall_score: reviewResult.overall_score,\n    approval_summary: reviewResult.approval_summary,\n    band_message: messageContent,\n    band_api_key: 'band_a_1780711851_ivz0SZp_4XJCN2Pxm6vAcojmzslFWulq'\n  }\n}];"
+      },
+      "id": "d864f5cb-3e8e-46a9-b88a-880dfb222bf2",
+      "name": "Build Approval Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        -208
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const normalizedData = $('Normalize Input').item.json;\nconst reviewResult = $('Parse Review Result').item.json;\n\n// issues_found can be string or array — handle both\nlet issuesText = '';\nif (Array.isArray(reviewResult.issues_found)) {\n  issuesText = reviewResult.issues_found.join('\\n');\n} else if (typeof reviewResult.issues_found === 'string') {\n  issuesText = reviewResult.issues_found;\n} else {\n  issuesText = 'See revision notes below';\n}\n\nconst messageContent = `@aiadpulse12/agent2-content ❌ REVISION REQUIRED (Attempt ${normalizedData.attempt || 1}/3)\\n\\n📦 Product: ${normalizedData.product_name}\\n⭐ Score: ${reviewResult.overall_score}/10\\n\\n⚠️ Issues Found:\\n${issuesText}\\n\\n📝 Revision Notes:\\n${reviewResult.revision_notes}\\n\\n➡️ ACTION: Fix ALL issues above and resubmit.`;\n\nreturn [{\n  json: {\n    product_name: normalizedData.product_name,\n    product_description: normalizedData.product_description,\n    target_audience: normalizedData.target_audience,\n    chat_id: normalizedData.chat_id,\n    research_data: normalizedData.research_data,\n    revision_notes: reviewResult.revision_notes,\n    attempt: (normalizedData.attempt || 1) + 1,\n    band_message: messageContent,\n    band_api_key: 'band_a_1780711851_ivz0SZp_4XJCN2Pxm6vAcojmzslFWulq'\n  }\n}];"
+      },
+      "id": "386428df-b687-41aa-aa28-dd31e875a20f",
+      "name": "Build Revision Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://aiadpulse12.app.n8n.cloud/webhook/campaign-agent",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"product_name\": $('Build Approval Message').item.json.product_name, \"product_description\": $('Build Approval Message').item.json.product_description, \"target_audience\": $('Build Approval Message').item.json.target_audience, \"chat_id\": $('Build Approval Message').item.json.chat_id, \"research_data\": $('Build Approval Message').item.json.research_data, \"content_data\": $('Build Approval Message').item.json.content_data, \"overall_score\": $('Build Approval Message').item.json.overall_score, \"approval_summary\": $('Build Approval Message').item.json.approval_summary } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1568,
+        -208
+      ],
+      "id": "52bae66a-de1b-45b2-bdf3-582df768fa41",
+      "name": "Trigger Campaign Agent1"
+    }
+  ],
+  "pinData": {
+    "Receive Content for Review": [
+      {
+        "json": {
+          "headers": {
+            "host": "aiadpulse12.app.n8n.cloud",
+            "user-agent": "n8n",
+            "content-length": "3885",
+            "accept": "application/json,text/html,application/xhtml+xml,application/xml,text/*;q=0.9, image/*;q=0.8, */*;q=0.7",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "4.165.103.121",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "SE",
+            "cf-ray": "a0b2dd091e3bde5f-ARN",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "x-forwarded-for": "4.165.103.121, 104.23.223.28",
+            "x-forwarded-host": "aiadpulse12.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-swc-29-7cb55c5d6f-rcz5z",
+            "x-is-trusted": "yes",
+            "x-real-ip": "4.165.103.121"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "product_name": "X",
+            "product_description": "its a product",
+            "target_audience": "people",
+            "chat_id": "7ef90d05-e5c2-4f15-ac62-8f5335529067",
+            "research_data": "{\n  \"market_positioning\": \"Generic placeholder product for a broad audience.\",\n  \"competitor_angles\": [\n    \"Lack of specific features.\",\n    \"Low brand recognition.\",\n    \"Unclear value proposition.\"\n  ],\n  \"target_pain_points\": [\n    \"Lack of identified needs.\",\n    \"Difficulty understanding product benefits.\",\n    \"Uncertainty about product value.\"\n  ],\n  \"unique_selling_points\": [\n    \"Requires further definition.\",\n    \"Potential for broad appeal.\",\n    \"Needs clear value proposition development.\"\n  ],\n  \"recommended_channels\": [\n    \"Social Media Marketing\",\n    \"Generic Online Advertising\",\n    \"Content Marketing (general)\"\n  ],\n  \"urgency_score\": 3,\n  \"research_summary\": \"The product requires significant market research to define its positioning, identify specific target audience needs, and articulate a clear value proposition. Current information is extremely limited and necessitates extensive investigation before launch.\"\n}",
+            "content_data": "{\n  \"product_copy\": {\n    \"headline\": \"Introducing X: A Product for Everyone\",\n    \"subheadline\": \"Discover a versatile solution designed to simplify your life.\",\n    \"body_copy\": \"We're excited to introduce X – a product with the potential to meet a wide range of needs. While we're still refining its specific purpose and benefits, we believe X offers a foundation for a truly impactful experience. We're committed to understanding your needs and delivering a product that truly adds value. Stay tuned for more details and updates as we continue to develop X.\",\n    \"cta\": \"Learn More & Be the First to Know\"\n  },\n  \"email_sequence\": [\n    {\n      \"subject\": \"Something Exciting is Coming...\",\n      \"preview_text\": \"Get ready to discover a new solution designed for you.\",\n      \"body\": \"Hi [Name],\\n\\nWe're thrilled to be developing something new, and we wanted to give you a sneak peek.\\n\\nX is designed to address a wide range of needs – we're still in the process of fully defining its benefits and how it can make your life easier.\\n\\nWe'll be sharing more details soon.  In the meantime, feel free to follow us on [Social Media Links] for updates.\\n\\nBest,\\nThe [Your Company] Team\"\n    },\n    {\n      \"subject\": \"Unlocking the Potential of X\",\n      \"preview_text\": \"We're diving deeper into what X can do for you.\",\n      \"body\": \"Hi [Name],\\n\\nWe've been working hard to understand how X can best serve you. We're focused on identifying your specific needs and crafting a compelling value proposition.\\n\\nWe're actively gathering feedback and refining our approach.  Your input is invaluable to us!\\n\\nWe'll be sharing more about X's capabilities soon. Keep an eye on your inbox.\\n\\nSincerely,\\nThe [Your Company] Team\"\n    },\n    {\n      \"subject\": \"X: Let's Build It Together\",\n      \"preview_text\": \"Your feedback is crucial to shaping the future of X.\",\n      \"body\": \"Hi [Name],\\n\\nWe're nearing a key milestone in the development of X, and we want you to be part of the journey.\\n\\nWe're launching a survey to gather your insights on what you're looking for in a product like X. Your feedback will directly influence how we shape its features and benefits.\\n\\n[Link to Survey]\\n\\nThank you for your support!\\nThe [Your Company] Team\"\n    }\n  ],\n  \"ad_hooks\": [\n    \"Introducing a product for everyone.\",\n    \"Simplify your life with a versatile solution.\",\n    \"Discover a new way to [benefit - to be defined].\",\n    \"We're building something amazing – stay tuned.\",\n    \"Your needs matter. We're listening.\"\n  ],\n  \"content_score\": 3\n}",
+            "attempt": 1
+          },
+          "webhookUrl": "https://aiadpulse12.app.n8n.cloud/webhook/review-agent",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Receive Content for Review": {
+      "main": [
+        [
+          {
+            "node": "Normalize Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Input": {
+      "main": [
+        [
+          {
+            "node": "OpenAI - Review Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI - Review Content": {
+      "main": [
+        [
+          {
+            "node": "Parse Review Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Review Result": {
+      "main": [
+        [
+          {
+            "node": "Is Content Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Approval to Band": {
+      "main": [
+        [
+          {
+            "node": "Trigger Campaign Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Revision Request to Band": {
+      "main": [
+        [
+          {
+            "node": "Send Back to Content Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Back to Content Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Content Approved?": {
+      "main": [
+        [
+          {
+            "node": "Build Approval Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Revision Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Approval Message": {
+      "main": [
+        [
+          {
+            "node": "Post Approval to Band",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Revision Message": {
+      "main": [
+        [
+          {
+            "node": "Post Revision Request to Band",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Campaign Agent1": {
+      "main": [
+        [
+          {
+            "node": "Respond OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "3c307f7a-6080-4eb4-bc2a-97d15761ebbd",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": "8729fed0b93232aa0742d9c9fd3ee489cd06e53a46df6a8a5f0f2739b22d2bce"
+  },
+  "nodeGroups": [],
+  "id": "0wiqrrEMDEAR37oA",
+  "tags": []
+}
