@@ -68,7 +68,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer e36e9050421292fd40419b35ab606cfb"
+              "value": "Bearer <Your API key>"
             },
             {
               "name": "Content-Type",
@@ -86,7 +86,7 @@
         }
       },
       "id": "571eef7f-81dd-49dc-8cb9-5a9e1f2ee37f",
-      "name": "OpenAI - Research Analysis",
+      "name": " Research Analysis",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
@@ -97,7 +97,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://aiadpulse12.app.n8n.cloud/webhook/content-agent",
+        "url": "https://<your url>.n8n.cloud/webhook/content-agent",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ { \"product_name\": $('Build Band Message').item.json.product_name, \"product_description\": $('Build Band Message').item.json.product_description, \"target_audience\": $('Build Band Message').item.json.target_audience, \"chat_id\": $('Build Band Message').item.json.chat_id, \"research_data\": $('Build Band Message').item.json.research_data, \"attempt\": 1 } }}",
@@ -181,7 +181,7 @@
       {
         "json": {
           "headers": {
-            "host": "aiadpulse12.app.n8n.cloud",
+            "host": "your url.app.n8n.cloud",
             "user-agent": "PostmanRuntime/7.54.0",
             "content-length": "237",
             "accept": "*/*",
@@ -210,9 +210,9 @@
             "product_name": "GlowUp Vitamin C Serum",
             "product_description": "20% Vitamin C serum for brightening skin",
             "target_audience": "Women aged 25-45 interested in skincare",
-            "chat_id": "7ef90d05-e5c2-4f15-ac62-8f5335529067"
+            "chat_id": "your chat id"
           },
-          "webhookUrl": "https://aiadpulse12.app.n8n.cloud/webhook/research-agent",
+          "webhookUrl": "https://<your url>.n8n.cloud/webhook/research-agent",
           "executionMode": "production"
         },
         "pairedItem": {
@@ -237,7 +237,7 @@
       "main": [
         [
           {
-            "node": "OpenAI - Research Analysis",
+            "node": " Research Analysis",
             "type": "main",
             "index": 0
           }
