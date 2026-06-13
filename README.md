@@ -261,8 +261,4 @@ AI Automation Agency — Lahore, Pakistan
 - Portfolio: ahmadraza-ai.me
 - Agency: AI AdPulse
 
----
 
-## 📄 License
-
-MIT License — open source, free to use and modify.
