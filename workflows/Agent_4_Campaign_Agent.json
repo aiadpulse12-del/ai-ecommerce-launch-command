@@ -1,0 +1,303 @@
+{
+  "name": "Agent 4 - Campaign Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "campaign-agent",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "[NODE_ID_REDACTED]",
+      "name": "Receive Approved Content",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -160
+      ],
+      "webhookId": "[WEBHOOK_ID_REDACTED]"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f1",
+              "name": "product_name",
+              "value": "={{ $json.body?.product_name ?? $json.product_name ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "f2",
+              "name": "product_description",
+              "value": "={{ $json.body?.product_description ?? $json.product_description ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "f3",
+              "name": "target_audience",
+              "value": "={{ $json.body?.target_audience ?? $json.target_audience ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "f4",
+              "name": "chat_id",
+              "value": "={{ $json.body?.chat_id ?? $json.chat_id ?? \"[DEFAULT_CHAT_ID_REDACTED]\" }}",
+              "type": "string"
+            },
+            {
+              "id": "f5",
+              "name": "research_data",
+              "value": "={{ $json.body?.research_data ?? $json.research_data ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "f6",
+              "name": "content_data",
+              "value": "={{ $json.body?.content_data ?? $json.content_data ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "f7",
+              "name": "overall_score",
+              "value": "={{ $json.body?.overall_score ?? $json.overall_score ?? 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "f8",
+              "name": "approval_summary",
+              "value": "={{ $json.body?.approval_summary ?? $json.approval_summary ?? \"\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "[NODE_ID_REDACTED]",
+      "name": "Normalize Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ \"https://app.band.ai/api/v1/agent/chats/\" + $json.chat_id + \"/messages\" }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $json.band_api_key }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"message\": { \"content\": $json.band_message, \"mentions\": [ { \"id\": \"[AGENT_MENTION_ID_REDACTED]\", \"name\": \"Agent 1 - Research Agent\", \"handle\": \"[YOUR_BAND_ORG]/[YOUR_AGENT1_HANDLE]\" } ] } } }}",
+        "options": {}
+      },
+      "id": "[NODE_ID_REDACTED]",
+      "name": "Post Final Brief to Band",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        896,
+        -160
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "[CREDENTIAL_ID_REDACTED]",
+          "name": "Band CampaignAgent Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"complete\", \"agent\": \"CampaignAgent\", \"product\": $('Build Final Message').item.json.product_name, \"campaign_brief\": $('Build Final Message').item.json.campaign_brief } }}",
+        "options": {}
+      },
+      "id": "[NODE_ID_REDACTED]",
+      "name": "Respond with Final Brief",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1120,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const normalizedData = $('Normalize Input').item.json;\nconst rawCampaign = $input.item.json.choices[0].message.content;\n\n// Clean markdown\nconst cleanCampaign = rawCampaign.replace(/```json/g, '').replace(/```/g, '').trim();\n\n// Fix common JSON errors from model output\nconst fixedCampaign = cleanCampaign\n  .replace(/,\\s*}/g, '}')\n  .replace(/,\\s*]/g, ']')\n  .replace(/(\"[^\"]*\":\\s*\"[^\"]*)[^\"]*(\"[^\"]*\"\\s*[,}])/g, '$1$2');\n\n// Parse JSON\nlet campaign;\ntry {\n  campaign = JSON.parse(cleanCampaign);\n} catch(e1) {\n  try {\n    campaign = JSON.parse(fixedCampaign);\n  } catch(e2) {\n    // Extract fields manually using regex as last resort\n    const getName = cleanCampaign.match(/\"campaign_name\"\\s*:\\s*\"([^\"]+)\"/);\n    const getSummary = cleanCampaign.match(/\"executive_summary\"\\s*:\\s*\"([^\"]+)\"/);\n    const getScore = cleanCampaign.match(/\"confidence_score\"\\s*:\\s*(\\d+)/);\n    campaign = {\n      campaign_name: getName ? getName[1] : 'Campaign Brief',\n      executive_summary: getSummary ? getSummary[1] : 'Campaign brief generated successfully.',\n      confidence_score: getScore ? getScore[1] : 'N/A',\n      launch_timeline: {\n        phase1: { duration: 'Week 1-2', focus: 'Awareness' },\n        phase2: { duration: 'Week 3-5', focus: 'Conversion' },\n        phase3: { duration: 'Week 6-8', focus: 'Retention' }\n      },\n      kpis: [],\n      launch_checklist: [],\n      channel_strategy: {}\n    };\n  }\n}\n\n// Safely extract fields\nconst campaignName = campaign.campaign_name || 'Campaign Brief';\nconst execSummary = campaign.executive_summary || 'Campaign brief generated.';\nconst confidenceScore = campaign.confidence_score || 'N/A';\n\nconst phase1 = campaign.launch_timeline?.phase1;\nconst phase2 = campaign.launch_timeline?.phase2;\nconst phase3 = campaign.launch_timeline?.phase3;\n\nconst kpis = Array.isArray(campaign.kpis) ? campaign.kpis : [];\nconst checklist = Array.isArray(campaign.launch_checklist) ? campaign.launch_checklist : [];\nconst channels = campaign.channel_strategy ? Object.keys(campaign.channel_strategy) : [];\n\nconst messageContent = `🎉 PIPELINE COMPLETE - AI E-COMMERCE LAUNCH COMMAND\\n\\n🚀 Campaign: ${campaignName}\\n📦 Product: ${normalizedData.product_name}\\n👥 Audience: ${normalizedData.target_audience}\\n\\n📊 Pipeline Summary:\\n✅ Research Agent - Market analysis complete\\n✅ Content Agent - Copy and emails generated\\n✅ Review Agent - Score ${normalizedData.overall_score}/10 Approved\\n✅ Campaign Agent - Brief assembled\\n\\n💼 Executive Summary:\\n${execSummary}\\n\\n📅 Launch Timeline:\\n- Phase 1: ${phase1?.duration || 'Week 1-2'} - ${phase1?.focus || 'Awareness'}\\n- Phase 2: ${phase2?.duration || 'Week 3-5'} - ${phase2?.focus || 'Conversion'}\\n- Phase 3: ${phase3?.duration || 'Week 6-8'} - ${phase3?.focus || 'Retention'}\\n\\n💰 Recommended Channels:\\n${channels.length > 0 ? channels.map(ch => `- ${ch}: ${campaign.channel_strategy[ch]?.tactic || ''} (ROAS: ${campaign.channel_strategy[ch]?.expected_roas || 'N/A'})`).join('\\n') : '- Multi-channel strategy'}\\n\\n📊 KPIs:\\n${kpis.length > 0 ? kpis.map(k => `- ${k.metric}: ${k.target}`).join('\\n') : '- See full brief for KPIs'}\\n\\n✅ Launch Checklist:\\n${checklist.length > 0 ? checklist.map(item => `- ${item}`).join('\\n') : '- See full brief for checklist'}\\n\\n💡 Confidence Score: ${confidenceScore}/10`;\n\nreturn [{\n  json: {\n    product_name: normalizedData.product_name,\n    campaign_brief: cleanCampaign,\n    band_message: messageContent,\n    chat_id: normalizedData.chat_id,\n    band_api_key: '[REDACTED_BAND_API_KEY]'\n  }\n}];"
+      },
+      "id": "[NODE_ID_REDACTED]",
+      "name": "Build Final Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.aimlapi.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer [REDACTED_AIML_API_KEY]"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"model\": \"google/gemma-3-4b-it\", \"messages\": [ { \"role\": \"user\", \"content\": \"You are a Campaign Strategy Agent. Build a complete actionable campaign brief. Return ONLY a valid JSON object with these exact fields: campaign_name (string), launch_timeline (object with phase1, phase2, phase3 each having duration and focus), channel_strategy (object with channels as keys each having budget_percentage, tactic, expected_roas), budget_allocation (object with total_budget_recommendation and breakdown), kpis (array of objects with metric and target), launch_checklist (array of strings), executive_summary (string max 3 sentences), confidence_score (number 1-10). No markdown, no explanation, ONLY the JSON object.\\n\\nProduct: \" + $json.product_name + \"\\nAudience: \" + $json.target_audience + \"\\nResearch: \" + $json.research_data + \"\\nApproved Content: \" + $json.content_data + \"\\nContent Review Score: \" + $json.overall_score + \"/10\" } ], \"temperature\": 0.5, \"max_tokens\": 1500 } }}",
+        "options": {}
+      },
+      "id": "[NODE_ID_REDACTED]",
+      "name": "Build Campaign Brief",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        448,
+        -160
+      ]
+    }
+  ],
+  "pinData": {
+    "Receive Approved Content": [
+      {
+        "json": {
+          "headers": {
+            "host": "[YOUR_N8N_HOSTNAME]",
+            "user-agent": "n8n",
+            "content-length": "2789",
+            "accept": "application/json,text/html,application/xhtml+xml,application/xml,text/*;q=0.9, image/*;q=0.8, */*;q=0.7",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "[IP_REDACTED]",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "SE",
+            "cf-ray": "[CF_RAY_REDACTED]",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "x-api-key": "[REDACTED_BAND_API_KEY]",
+            "x-forwarded-for": "[IP_REDACTED], [IP_REDACTED]",
+            "x-forwarded-host": "[YOUR_N8N_HOSTNAME]",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "[INTERNAL_SERVER_REDACTED]",
+            "x-is-trusted": "yes",
+            "x-real-ip": "[IP_REDACTED]"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "message": {
+              "content": "🎉 PIPELINE COMPLETE\n\n🚀 Campaign Brief Ready!\nProduct: [EXAMPLE_PRODUCT_NAME]\n\nPipeline Summary:\n- ResearchAgent: ✅ Market analysis complete\n- ContentAgent: ✅ Copy and email sequence generated\n- ReviewAgent: ✅ Score 9/10 Approved\n- CampaignAgent: ✅ Brief assembled\n\nFull Campaign Brief:\n{\n  \"campaign_name\": \"[EXAMPLE_CAMPAIGN_NAME]\",\n  \"launch_timeline\": {\n    \"phase1\": { \"duration\": \"4 weeks\", \"focus\": \"Brand Awareness and Engagement\" },\n    \"phase2\": { \"duration\": \"3 weeks\", \"focus\": \"Conversion and Sales Promotion\" },\n    \"phase3\": { \"duration\": \"2 weeks\", \"focus\": \"Retention and Customer Loyalty\" }\n  },\n  \"channel_strategy\": {\n    \"Social Media\": { \"budget_percentage\": 40, \"tactic\": \"Visual storytelling through posts and ads.\", \"expected_roas\": 5 },\n    \"Content Marketing\": { \"budget_percentage\": 30, \"tactic\": \"Collaborations with relevant blogs.\", \"expected_roas\": 4 },\n    \"Ecommerce Marketplaces\": { \"budget_percentage\": 30, \"tactic\": \"Promotional listings on niche platforms.\", \"expected_roas\": 6 }\n  },\n  \"budget_allocation\": {\n    \"total_budget_recommendation\": 100000,\n    \"breakdown\": { \"Social Media\": 40000, \"Content Marketing\": 30000, \"Ecommerce Marketplaces\": 30000 }\n  },\n  \"kpis\": [\n    { \"metric\": \"Website Traffic\", \"target\": \"10000 visits\" },\n    { \"metric\": \"Conversion Rate\", \"target\": \"5%\" },\n    { \"metric\": \"Customer Retention Rate\", \"target\": \"30%\" },\n    { \"metric\": \"ROAS\", \"target\": \"5\" }\n  ],\n  \"launch_checklist\": [\n    \"Finalize ad creatives and content.\",\n    \"Set up tracking for KPIs.\",\n    \"Launch social media campaigns.\",\n    \"Distribute email sequences.\",\n    \"Monitor performance and adjust strategies.\"\n  ],\n  \"executive_summary\": \"[EXAMPLE_EXECUTIVE_SUMMARY]\",\n  \"confidence_score\": 9\n}",
+              "mentions": [
+                {
+                  "id": "[AGENT_MENTION_ID_REDACTED]",
+                  "name": "Agent 1 - Research Agent",
+                  "handle": "[YOUR_BAND_ORG]/[YOUR_AGENT1_HANDLE]"
+                }
+              ]
+            }
+          },
+          "webhookUrl": "[YOUR_N8N_INSTANCE_URL]/webhook/campaign-agent",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Receive Approved Content": {
+      "main": [
+        [
+          {
+            "node": "Normalize Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Input": {
+      "main": [
+        [
+          {
+            "node": "Build Campaign Brief",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Final Brief to Band": {
+      "main": [
+        [
+          {
+            "node": "Respond with Final Brief",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Final Message": {
+      "main": [
+        [
+          {
+            "node": "Post Final Brief to Band",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Campaign Brief": {
+      "main": [
+        [
+          {
+            "node": "Build Final Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "[VERSION_ID_REDACTED]",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": "[INSTANCE_ID_REDACTED]"
+  },
+  "nodeGroups": [],
+  "id": "[WORKFLOW_ID_REDACTED]",
+  "tags": []
+}
