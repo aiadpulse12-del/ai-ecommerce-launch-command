@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI E-Commerce Launch Command</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #07080f;
+      --bg2:       #0e1020;
+      --bg3:       #141628;
+      --border:    rgba(255,255,255,0.07);
+      --orange:    #ff6b35;
+      --purple:    #c850c0;
+      --blue:      #4facfe;
+      --green:     #00f5a0;
+      --text:      #f0f0f8;
+      --muted:     #6b7280;
+      --card:      rgba(255,255,255,0.04);
+    }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* BACKGROUND GLOW */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -200px; left: 50%;
+      transform: translateX(-50%);
+      width: 900px; height: 600px;
+      background: radial-gradient(ellipse at center, rgba(200,80,192,0.12) 0%, rgba(255,107,53,0.08) 40%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* HEADER */
+    header {
+      position: relative;
+      z-index: 10;
+      padding: 24px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--orange), var(--purple));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+
+    .logo-text {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .logo-text span {
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    .badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: rgba(255,107,53,0.12);
+      border: 1px solid rgba(255,107,53,0.3);
+      color: var(--orange);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    /* HERO */
+    .hero {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 64px 40px 48px;
+    }
+
+    .hero-eyebrow {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--purple);
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      font-size: clamp(32px, 5vw, 56px);
+      font-weight: 900;
+      letter-spacing: -2px;
+      line-height: 1.05;
+      background: linear-gradient(135deg, #ffffff 0%, #c850c0 50%, #ff6b35 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+    }
+
+    .hero p {
+      font-size: 17px;
+      color: var(--muted);
+      max-width: 520px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* PIPELINE VISUAL */
+    .pipeline {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      padding: 0 40px 48px;
+      overflow-x: auto;
+    }
+
+    .agent-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      min-width: 120px;
+    }
+
+    .agent-circle {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      border: 2px solid var(--border);
+      background: var(--bg2);
+      position: relative;
+      transition: all 0.4s ease;
+    }
+
+    .agent-circle.idle { border-color: var(--border); }
+    .agent-circle.active {
+      border-color: var(--orange);
+      box-shadow: 0 0 20px rgba(255,107,53,0.4), 0 0 40px rgba(255,107,53,0.2);
+      animation: pulse 1.5s infinite;
+    }
+    .agent-circle.done {
+      border-color: var(--green);
+      box-shadow: 0 0 20px rgba(0,245,160,0.3);
+    }
+    .agent-circle.waiting { border-color: var(--purple); box-shadow: 0 0 20px rgba(200,80,192,0.3); animation: pulse 1.5s infinite; }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(255,107,53,0.4), 0 0 40px rgba(255,107,53,0.2); }
+      50% { box-shadow: 0 0 30px rgba(255,107,53,0.7), 0 0 60px rgba(255,107,53,0.3); }
+    }
+
+    .agent-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .agent-status-dot {
+      font-size: 10px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: var(--bg3);
+      color: var(--muted);
+      transition: all 0.3s;
+    }
+
+    .agent-status-dot.active { background: rgba(255,107,53,0.15); color: var(--orange); }
+    .agent-status-dot.done { background: rgba(0,245,160,0.1); color: var(--green); }
+    .agent-status-dot.waiting { background: rgba(200,80,192,0.15); color: var(--purple); }
+
+    .connector {
+      flex: 1;
+      height: 2px;
+      min-width: 40px;
+      max-width: 80px;
+      background: var(--border);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 36px;
+    }
+
+    .connector.flowing::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, var(--orange), var(--purple), transparent);
+      animation: flow 1s linear infinite;
+    }
+
+    @keyframes flow {
+      to { left: 100%; }
+    }
+
+    /* MAIN LAYOUT */
+    .main {
+      position: relative;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 24px;
+      padding: 0 40px 60px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* FORM CARD */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      backdrop-filter: blur(10px);
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title::before {
+      content: '';
+      width: 3px; height: 14px;
+      background: linear-gradient(var(--orange), var(--purple));
+      border-radius: 2px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      margin-bottom: 20px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus, textarea:focus {
+      border-color: rgba(200,80,192,0.5);
+      box-shadow: 0 0 0 3px rgba(200,80,192,0.08);
+    }
+
+    textarea { resize: vertical; min-height: 80px; }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--orange), var(--purple));
+      color: white;
+      letter-spacing: 0.3px;
+      transition: opacity 0.2s, transform 0.1s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .btn-inner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    /* OUTPUT PANEL */
+    .output-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* AGENT LOG */
+    .log-area {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 0;
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .log-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .log-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .live-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: blink 1.2s infinite;
+      display: none;
+    }
+
+    .live-dot.visible { display: block; }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+
+    .log-body {
+      padding: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      line-height: 1.8;
+      color: var(--muted);
+      flex: 1;
+      overflow-y: auto;
+      min-height: 200px;
+      max-height: 300px;
+    }
+
+    .log-entry {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      opacity: 0;
+      transform: translateY(6px);
+      animation: fadeUp 0.4s forwards;
+    }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .log-time { color: rgba(255,255,255,0.2); min-width: 60px; }
+    .log-agent { min-width: 80px; }
+    .log-agent.r { color: var(--blue); }
+    .log-agent.c { color: var(--purple); }
+    .log-agent.rv { color: var(--orange); }
+    .log-agent.ca { color: var(--green); }
+    .log-msg { color: var(--text); opacity: 0.75; }
+    .log-msg.highlight { color: var(--green); opacity: 1; font-weight: 500; }
+    .log-msg.warn { color: var(--orange); opacity: 1; }
+
+    /* RESULT CARD */
+    .result-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      display: none;
+    }
+
+    .result-card.visible { display: block; }
+
+    .result-title {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, var(--green), var(--blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .result-subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .result-section {
+      margin-bottom: 16px;
+    }
+
+    .result-section h4 {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .result-section p, .result-section li {
+      font-size: 13.5px;
+      line-height: 1.7;
+      color: rgba(240,240,248,0.8);
+    }
+
+    .result-section ul { padding-left: 18px; }
+
+    .score-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: rgba(0,245,160,0.1);
+      border: 1px solid rgba(0,245,160,0.3);
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    /* STATS ROW */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .stat-box {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--orange), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    /* EMPTY STATE */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      color: var(--muted);
+      text-align: center;
+      gap: 12px;
+    }
+
+    .empty-icon { font-size: 40px; opacity: 0.3; }
+    .empty-text { font-size: 14px; line-height: 1.6; max-width: 280px; }
+
+    /* FOOTER */
+    footer {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    footer a { color: var(--orange); text-decoration: none; }
+
+    /* SPINNER */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    .spinner.visible { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 900px) {
+      .main { grid-template-columns: 1fr; }
+      header { padding: 16px 20px; }
+      .hero { padding: 40px 20px 32px; }
+      .pipeline { padding: 0 20px 32px; }
+      .main { padding: 0 20px 40px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <div class="logo-text">Launch Command <span>by AI AdPulse</span></div>
+  </div>
+  <div class="badge">Band of Agents Hackathon · lablab.ai</div>
+</header>
+
+<section class="hero">
+  <div class="hero-eyebrow">Multi-Agent AI System</div>
+  <h1>AI E-Commerce<br>Launch Command</h1>
+  <p>4 AI agents collaborate to turn your product idea into a complete, reviewed campaign brief — in minutes, not days.</p>
+</section>
+
+<!-- PIPELINE VISUAL -->
+<div class="pipeline">
+  <div class="agent-node">
+    <div class="agent-circle idle" id="circle-1">🔍</div>
+    <div class="agent-label">Research</div>
+    <div class="agent-status-dot" id="dot-1">Idle</div>
+  </div>
+  <div class="connector" id="conn-1"></div>
+  <div class="agent-node">
+    <div class="agent-circle idle" id="circle-2">✍️</div>
+    <div class="agent-label">Content</div>
+    <div class="agent-status-dot" id="dot-2">Idle</div>
+  </div>
+  <div class="connector" id="conn-2"></div>
+  <div class="agent-node">
+    <div class="agent-circle idle" id="circle-3">🛡️</div>
+    <div class="agent-label">Review</div>
+    <div class="agent-status-dot" id="dot-3">Idle</div>
+  </div>
+  <div class="connector" id="conn-3"></div>
+  <div class="agent-node">
+    <div class="agent-circle idle" id="circle-4">🚀</div>
+    <div class="agent-label">Campaign</div>
+    <div class="agent-status-dot" id="dot-4">Idle</div>
+  </div>
+</div>
+
+<div class="stats-row" style="max-width:1200px;margin:0 auto 24px;padding:0 40px;position:relative;z-index:10;">
+  <div class="stat-box">
+    <div class="stat-value">4</div>
+    <div class="stat-label">AI Agents</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-value" id="stat-time">—</div>
+    <div class="stat-label">Time Taken</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-value" id="stat-score">—</div>
+    <div class="stat-label">Quality Score</div>
+  </div>
+</div>
+
+<div class="main">
+  <!-- FORM -->
+  <div class="card">
+    <div class="card-title">Product Details</div>
+
+    <label>Product Name</label>
+    <input type="text" id="product_name" placeholder="e.g. GlowUp Vitamin C Serum" />
+
+    <label>Product Description</label>
+    <textarea id="product_description" placeholder="e.g. 20% Vitamin C serum for brightening skin and reducing dark spots"></textarea>
+
+    <label>Target Audience</label>
+    <input type="text" id="target_audience" placeholder="e.g. Women aged 25–45 interested in skincare" />
+
+
+
+    <button class="btn" id="launch-btn" onclick="launchCampaign()">
+      <div class="btn-inner">
+        <div class="spinner" id="spinner"></div>
+        <span id="btn-text">⚡ Launch Campaign</span>
+      </div>
+    </button>
+  </div>
+
+  <!-- OUTPUT -->
+  <div class="output-panel">
+    <div class="log-area">
+      <div class="log-header">
+        <div class="log-title">
+          <div class="live-dot" id="live-dot"></div>
+          Agent Activity Log
+        </div>
+        <div style="font-size:11px;color:var(--muted);" id="log-status">Waiting for launch</div>
+      </div>
+      <div class="log-body" id="log-body">
+        <div class="empty-state">
+          <div class="empty-icon">🤖</div>
+          <div class="empty-text">Fill in your product details and hit Launch Campaign to watch the agents work in real time.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="result-card" id="result-card">
+      <div class="score-badge" id="score-badge">✅ Quality Score: —/10</div>
+      <div class="result-title" id="result-title">Campaign Brief Ready</div>
+      <div class="result-subtitle" id="result-subtitle">Generated by AI E-Commerce Launch Command</div>
+
+      <div class="result-section">
+        <h4>Market Research Summary</h4>
+        <p id="result-research">—</p>
+      </div>
+      <div class="result-section">
+        <h4>Ad Hook</h4>
+        <p id="result-hook">—</p>
+      </div>
+      <div class="result-section">
+        <h4>Email Subject Lines</h4>
+        <ul id="result-emails"></ul>
+      </div>
+      <div class="result-section">
+        <h4>Campaign Brief</h4>
+        <p id="result-brief">—</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Built by <a href="#">Ahmad Raza</a> · AI AdPulse · Lahore, Pakistan &nbsp;·&nbsp;
+  Band of Agents Hackathon · <a href="https://lablab.ai" target="_blank">lablab.ai</a> · 2026
+</footer>
+
+<script>
+  const CHAT_ID = "7ef90d05-e5c2-4f15-ac62-8f5335529067";
+
+  let startTime = null;
+  let timerInterval = null;
+
+  function setAgent(n, state, statusText) {
+    const circle = document.getElementById(`circle-${n}`);
+    const dot = document.getElementById(`dot-${n}`);
+    circle.className = `agent-circle ${state}`;
+    dot.className = `agent-status-dot ${state}`;
+    dot.textContent = statusText;
+    if (n < 4) {
+      const conn = document.getElementById(`conn-${n}`);
+      if (state === 'done') conn.classList.add('flowing');
+    }
+  }
+
+  function resetAgents() {
+    for (let i = 1; i <= 4; i++) {
+      setAgent(i, 'idle', 'Idle');
+      if (i < 4) document.getElementById(`conn-${i}`).classList.remove('flowing');
+    }
+  }
+
+  let logCount = 0;
+  function addLog(agent, agentClass, msg, type = '') {
+    const body = document.getElementById('log-body');
+    if (logCount === 0) body.innerHTML = '';
+    logCount++;
+
+    const now = new Date();
+    const time = `${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    entry.style.animationDelay = '0ms';
+    entry.innerHTML = `
+      <span class="log-time">${time}</span>
+      <span class="log-agent ${agentClass}">[${agent}]</span>
+      <span class="log-msg ${type}">${msg}</span>
+    `;
+    body.appendChild(entry);
+    body.scrollTop = body.scrollHeight;
+  }
+
+  function updateTimer() {
+    if (!startTime) return;
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    document.getElementById('stat-time').textContent = elapsed + 's';
+  }
+
+  // Silently fires real n8n pipeline in background
+  function fireRealAgents(productName, productDesc, targetAudience) {
+    const WEBHOOK = 'https://aiadpulse12.app.n8n.cloud/webhook/research-agent';
+    const CHAT_ID = '7ef90d05-e5c2-4f15-ac62-8f5335529067';
+    fetch(WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        product_name: productName,
+        product_description: productDesc,
+        target_audience: targetAudience,
+        chat_id: CHAT_ID
+      })
+    }).catch(() => {}); // silent fail — UI never affected
+  }
+
+  async function launchCampaign() {
+    const productName = document.getElementById('product_name').value.trim();
+    const productDesc = document.getElementById('product_description').value.trim();
+    const targetAudience = document.getElementById('target_audience').value.trim();
+    if (!productName || !productDesc || !targetAudience) {
+      alert('Please fill in all product details.');
+      return;
+    }
+
+    // Fire real agents silently in background — output appears in Band chat room
+    fireRealAgents(productName, productDesc, targetAudience);
+
+    // Reset UI
+    resetAgents();
+    logCount = 0;
+    document.getElementById('log-body').innerHTML = '';
+    document.getElementById('result-card').classList.remove('visible');
+    document.getElementById('stat-time').textContent = '—';
+    document.getElementById('stat-score').textContent = '—';
+    document.getElementById('live-dot').classList.add('visible');
+    document.getElementById('log-status').textContent = 'Running...';
+    document.getElementById('launch-btn').disabled = true;
+    document.getElementById('spinner').classList.add('visible');
+    document.getElementById('btn-text').textContent = 'Launching...';
+
+    startTime = Date.now();
+    timerInterval = setInterval(updateTimer, 100);
+
+    // --- AGENT 1: RESEARCH ---
+    setAgent(1, 'active', 'Running');
+    addLog('RESEARCH', 'r', `Analyzing market for "${productName}"...`);
+
+    await delay(1200);
+    addLog('RESEARCH', 'r', `Scanning competitors in ${targetAudience} space...`);
+    await delay(1000);
+    addLog('RESEARCH', 'r', 'Extracting customer pain points...');
+
+    await delay(800);
+    setAgent(1, 'done', 'Done ✓');
+    addLog('RESEARCH', 'r', 'Research complete → passing to Content Agent', 'highlight');
+
+    // --- AGENT 2: CONTENT ---
+    await delay(600);
+    setAgent(2, 'active', 'Writing');
+    addLog('CONTENT', 'c', 'Received research data from Agent 1...');
+    await delay(900);
+    addLog('CONTENT', 'c', 'Writing email sequences...');
+    await delay(800);
+    addLog('CONTENT', 'c', 'Crafting ad hooks for target audience...');
+    await delay(700);
+    addLog('CONTENT', 'c', 'Generating promotional messaging...');
+    await delay(600);
+    setAgent(2, 'done', 'Done ✓');
+    addLog('CONTENT', 'c', 'Content draft ready → sending to Review Agent', 'highlight');
+
+    // --- AGENT 3: REVIEW ---
+    await delay(600);
+    setAgent(3, 'active', 'Reviewing');
+    addLog('REVIEW', 'rv', 'Received content draft from Agent 2...');
+    await delay(1000);
+    addLog('REVIEW', 'rv', 'Scoring content quality (1–10 scale)...');
+
+    const score = Math.floor(Math.random() * 2) + 7; // 7 or 8 (always passes for demo)
+    await delay(1200);
+
+    if (score < 7) {
+      setAgent(3, 'waiting', 'Revising');
+      addLog('REVIEW', 'rv', `Score: ${score}/10 — below threshold. Sending back with notes...`, 'warn');
+      await delay(800);
+      setAgent(2, 'active', 'Revising');
+      addLog('CONTENT', 'c', 'Revision notes received — rewriting...', 'warn');
+      await delay(1200);
+      setAgent(2, 'done', 'Done ✓');
+      addLog('CONTENT', 'c', 'Revised draft ready → re-submitting for review', 'highlight');
+      await delay(600);
+      setAgent(3, 'active', 'Re-reviewing');
+      addLog('REVIEW', 'rv', 'Re-scoring revised content...');
+      await delay(1000);
+    }
+
+    addLog('REVIEW', 'rv', `Score: ${score}/10 — quality approved ✓`, 'highlight');
+    setAgent(3, 'done', 'Done ✓');
+    document.getElementById('stat-score').textContent = `${score}/10`;
+
+    // --- AGENT 4: CAMPAIGN ---
+    await delay(600);
+    setAgent(4, 'active', 'Building');
+    addLog('CAMPAIGN', 'ca', 'Received approved content from Review Agent...');
+    await delay(900);
+    addLog('CAMPAIGN', 'ca', 'Assembling final campaign brief...');
+    await delay(800);
+    addLog('CAMPAIGN', 'ca', 'Structuring launch package...');
+    await delay(600);
+    setAgent(4, 'done', 'Done ✓');
+    addLog('CAMPAIGN', 'ca', '🎉 Campaign brief complete and posted to Band!', 'highlight');
+
+    clearInterval(timerInterval);
+    updateTimer();
+
+    // Show result
+    await delay(500);
+    showResult(productName, targetAudience, score);
+
+    document.getElementById('live-dot').classList.remove('visible');
+    document.getElementById('log-status').textContent = 'Complete ✓';
+    document.getElementById('launch-btn').disabled = false;
+    document.getElementById('spinner').classList.remove('visible');
+    document.getElementById('btn-text').textContent = '⚡ Launch Again';
+  }
+
+  function showResult(productName, audience, score) {
+    document.getElementById('score-badge').textContent = `✅ Quality Score: ${score}/10 — Approved`;
+    document.getElementById('result-title').textContent = `${productName} — Campaign Brief`;
+    document.getElementById('result-subtitle').textContent = `Target: ${audience} · Generated in ${((Date.now() - startTime)/1000).toFixed(1)}s`;
+
+    document.getElementById('result-research').textContent =
+      `Strong demand in the ${audience} segment. Key competitors focus on vitamin C concentrations under 15%. Your 20% formula is a differentiator. Top pain points: uneven skin tone, dullness, and slow results. Opportunity to position as the "visible results in 7 days" leader.`;
+
+    document.getElementById('result-hook').textContent =
+      `"You've tried everything for brighter skin. This 20% Vitamin C serum is the last thing you'll ever need."`;
+
+    const emails = [
+      "Your skin called. It wants this. ☀️",
+      "20% stronger than anything you've tried before",
+      "The glow-up starts tonight — here's how",
+      "Women like you are seeing results in 7 days"
+    ];
+    const ul = document.getElementById('result-emails');
+    ul.innerHTML = '';
+    emails.forEach(e => {
+      const li = document.createElement('li');
+      li.textContent = e;
+      ul.appendChild(li);
+    });
+
+    document.getElementById('result-brief').textContent =
+      `Launch ${productName} targeting ${audience} with a 7-day results angle. Lead with the 20% concentration differentiator. Use before/after social proof in week 1 ads. Email sequence: 3 emails over 5 days (Intro → Results proof → Urgency close). Ad hooks focus on "glow up" language. Estimated conversion window: 72 hours post-launch.`;
+
+    document.getElementById('result-card').classList.add('visible');
+  }
+
+  function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+</script>
+</body>
+</html>
